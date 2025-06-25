@@ -1,0 +1,1 @@
+console.log(`Arguments: ${Deno.args.join(', ')}`);

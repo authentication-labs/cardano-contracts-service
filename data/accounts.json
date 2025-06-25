@@ -1,0 +1,70 @@
+{
+  "Mainnet": [],
+  "Preprod": [],
+  "Preview": [
+    {
+      "timestamp": "2025-06-13T08:31:08.098Z",
+      "name": "a1",
+      "account": {
+        "address": "addr_test1vzzmdyp768tpspema5q7wfq0l9ag0894umsgpa6d5yreklqu4dckk",
+        "details": {
+          "privateKey": "addr_xsk1lqgu59s9ftvsenhfz4aer3lmqqgcclum0s3v595t7pafwfs33aggcxa6759vp4gemhvhj93d2lgatdnprma2wl6vkrtqdkjnkduqvqslxuxdk",
+          "publicKey": "3bd238b6cd7a2b1c9b926064cde840a744d2661dd2bef1dc05ffb5fade461add",
+          "credential": {
+            "type": "Key",
+            "hash": "85b6903ed1d618073bed01e7240ff97a879cb5e6e080f74da1079b7c"
+          }
+        },
+        "seedPhrase": "ozone capable negative pave agent style wire odor urban between aspect puzzle calm select sure angry local south perfect planet effort grit camera case"
+      }
+    },
+    {
+      "timestamp": "2025-06-13T08:32:25.070Z",
+      "name": "a2",
+      "account": {
+        "address": "addr_test1vrrs27ez9c5s6gs0zpyh70t68rtu4lrluz60d2uyd0fuj5cezt608",
+        "details": {
+          "privateKey": "addr_xsk17pytzgr7p2cn8nld3lwapsn6wdw5e4x0kyjvn9u8x3nhsjqh698m4gjfmq2snkjjg94e9jaj360npmg5xp4nur224cu9dje3ttzsuts8fhjxm",
+          "publicKey": "0e0a7b1119466c10583bb42b68e4f76378899d2bbd9e728c1584c64d297ecaa4",
+          "credential": {
+            "type": "Key",
+            "hash": "c7057b222e290d220f10497f3d7a38d7cafc7fe0b4f6ab846bd3c953"
+          }
+        },
+        "seedPhrase": "follow advance sausage calm cherry congress gaze crime elbow forum remain venture track link scene wool enlist unaware mail stand monster ostrich someone pilot"
+      }
+    },
+    {
+      "timestamp": "2025-06-13T08:32:29.060Z",
+      "name": "a3",
+      "account": {
+        "address": "addr_test1vz3ammtq2a3wnx8m5lnf8p2s5ehhxqc6lzvlkycfkh7tm4guvj2yu",
+        "details": {
+          "privateKey": "addr_xsk14z85kqtnm3f8m8tryt7x8j5yh6ghhk7ud20fsngzk4pkpcul2dvknze2ulvxg2vww5zyc3psnzfr28w36kv7rgf7y53qux2eygt3drgp6mg3c",
+          "publicKey": "f3d2eaf6742d38f5313bde92579bf836bb49ab71200750560f7b46670c917d60",
+          "credential": {
+            "type": "Key",
+            "hash": "a3dded605762e998fba7e6938550a66f73031af899fb1309b5fcbdd5"
+          }
+        },
+        "seedPhrase": "lift drift success relax language achieve fiction under rice hidden cool farm opera town cook invite napkin excite surprise obey grow sister advice toilet"
+      }
+    },
+    {
+      "timestamp": "2025-06-16T14:47:51.818Z",
+      "name": "a4",
+      "account": {
+        "address": "addr_test1vqtap84nssw80u6ntvwr4yw6zrlv9aadnhqcu8usq5yn7qcqcnkuu",
+        "details": {
+          "privateKey": "addr_xsk17rn4jum22weu8kwhtw43yfa8tgcy0vvrrnf7jlq83dhft3wmy9pa00zqh8669tmygsmmfaeg2y4dhkpg08re2ts8ys6jm656n66mhpca75ykn",
+          "publicKey": "abba7c498b97ef37599fb53cab07356bdefb48ad3c76640c8d1ae7617d1b43e8",
+          "credential": {
+            "type": "Key",
+            "hash": "17d09eb3841c77f3535b1c3a91da10fec2f7ad9dc18e1f9005093f03"
+          }
+        },
+        "seedPhrase": "gallery decide pride reflect survey baby zoo ask helmet income dolphin wall pencil type jazz empower naive tree tool near public casino faint quantum"
+      }
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+script=$1
+shift
+
+if [[ ! -f "scripts/$script.ts" ]]; then
+  echo "File scripts/$script.ts not found!"
+  exit 1
+fi
+
+deno run -A --env-file "scripts/$script.ts" "$@"

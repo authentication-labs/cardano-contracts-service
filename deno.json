@@ -1,0 +1,21 @@
+{
+  "tasks": {
+    "cli:dev": "deno run -A --env-file --watch cli/mod.ts",
+    "cli:debug": "deno run -A --env-file --inspect-brk --watch cli/mod.ts",
+    "cli:debug-verbose": "deno run -A --env-file --unstable --v8-flags=--stack-trace-limit=100 cli/mod.ts",
+    "api": "deno run -A --env-file rest_api/app.ts"
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@1",
+    "yaml": "npm:yaml@^2.8.0",
+    "@asteasolutions/zod-to-openapi": "npm:@asteasolutions/zod-to-openapi",
+    "commander": "npm:commander@^14.0.0",
+    "express": "npm:express@^5.1.0",
+    "@types/express": "npm:@types/express@^5.0.0",
+    "swagger-ui-express": "npm:swagger-ui-express@^5.0.1",
+    "@types/swagger-ui-express": "npm:@types/swagger-ui-express@^4.1.8",
+    "lucid": "https://deno.land/x/lucid@0.20.11/mod.ts",
+    "cbor": "https://deno.land/x/cbor@v1.6.0/index.js",
+    "zod": "npm:zod@^3.25.56"
+  }
+}

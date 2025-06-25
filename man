@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Manage
+# deno run -A --env-file manage/mod.ts "$@"
+deno task cli:debug-verbose "$@"
