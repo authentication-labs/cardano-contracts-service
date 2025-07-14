@@ -1,9 +1,11 @@
 import express from "express";
 import swaggerUi from "swagger-ui-express";
+import cors from "cors";
 import registryRoutes from "./modules/registry/registry.routes.ts";
+import transferRoutes from "./modules/transfer/transfer.routes.ts";
 import { errorHandler } from "./middleware.ts";
 import { getOpenApiDocumentation } from "./openapi/mod.ts";
-import {type Express, Request, Response } from 'express'
+import { type Express, Request, Response } from 'express'
 import { checkEnvVars } from "../libs/env.ts";
 
 function getEnvironmentReport() {
@@ -24,6 +26,14 @@ function getEnvironmentReport() {
 
 const app: Express = express();
 
+// Enable CORS for all routes
+app.use(cors({
+  origin: ['http://localhost:3003', 'http://localhost:3000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 app.use(errorHandler);
 
@@ -40,6 +50,7 @@ app.get("/healthcheck", (_req: Request, res: Response) => {
 });
 
 app.use("/registries", registryRoutes);
+app.use("/transfers", transferRoutes);
 const PORT = 3000;
 
 const runningServer = app.listen(PORT, () => {

@@ -9,6 +9,7 @@ import { RegistryDatum, RegistryDatumT } from '../../../offchain/domain_types.ts
 import { assetToUnit } from '../../../offchain/common/assets.ts';
 import { toLucidAsset } from '../../../store/schemas/common.ts';
 import { Data, Assets } from 'lucid';
+import { TokenItem } from '../../../store/schemas/token.ts';
 
 
 // Helper functions
@@ -42,17 +43,20 @@ const env = {
 export class RegistryService {
 
   static async createRegistry(input: CreateRegistryInput): Promise<DeploymentItem> {
+    console.log('createRegistry', input);
     await stores.loadAll();
+    console.log('stores.loadAll');
 
     const lucid = await createLucid();
+    console.log('lucid', lucid);
     const deployTool = new DeployTool(lucid);
-
+    console.log('deployTool', deployTool);
     const deployment = await deployTool.executeDeployAll({
       fundId: input.fundId,
       adminAddr: input.adminAddr,
       save: true,
     });
-
+    console.log('deployment', deployment);
     return deployment;
   }
 
@@ -133,6 +137,125 @@ export class RegistryService {
     const registryOps = new ExecRegistryOps(fundId, env.DEFAULT_SCRIPTS_SRC, adminAddr);
     await registryOps.init();
     await registryOps.removeAddr(address);
+
+    return true;
+  }
+
+  static async addTokenContract(
+    fundId: string,
+    policyId: string
+  ): Promise<TokenItem> {
+    await stores.loadAll();
+
+    // Verify the fund exists
+    const deployment = stores.deploymentsStore.data.find(item => item.fundId === fundId);
+    if (!deployment) {
+      throw new Error(`Registry not found: ${fundId}`);
+    }
+
+    // Create token item
+    const tokenItem: TokenItem = {
+      timestamp: new Date(),
+      fundId: fundId,
+      tokenContractAddr: deployment.scripts.Transfer.address, // Use the transfer contract address
+      asset: {
+        policy: policyId,
+        name: `token_${fundId}_${Date.now()}` // Generate a unique name
+      }
+    };
+
+    // Add to tokens store using the store's add method
+    const tokensStore = stores.tokensStore;
+    tokensStore.add(tokenItem);
+
+    // Save the updated store
+    await tokensStore.save();
+
+    console.log(`Token contract added to registry for fund ${fundId}:`, {
+      policyId
+    });
+
+    return tokenItem;
+  }
+
+  static async getTokenContracts(fundId: string): Promise<TokenItem[]> {
+    await stores.loadAll();
+
+    // Verify the fund exists
+    const deployment = stores.deploymentsStore.data.find(item => item.fundId === fundId);
+    if (!deployment) {
+      throw new Error(`Registry not found: ${fundId}`);
+    }
+
+    // Get tokens from the store
+    const tokens = stores.tokensStore.data;
+
+    // Filter tokens that belong to this fund
+    const fundTokens = tokens.filter(token => token.fundId === fundId);
+
+    return fundTokens;
+  }
+
+  static async getTokenPolicies(fundId: string): Promise<string[]> {
+    await stores.loadAll();
+
+    // Verify the fund exists
+    const deployment = stores.deploymentsStore.data.find(item => item.fundId === fundId);
+    if (!deployment) {
+      throw new Error(`Registry not found: ${fundId}`);
+    }
+
+    // Get tokens from the store
+    const tokens = stores.tokensStore.data;
+
+    // Filter tokens that belong to this fund and extract policy IDs
+    const fundTokenPolicies = tokens
+      .filter(token => token.fundId === fundId)
+      .map(token => token.asset.policy);
+
+    return fundTokenPolicies;
+  }
+
+  static async removeTokenContract(
+    fundId: string,
+    policyId: string
+  ): Promise<boolean> {
+    await stores.loadAll();
+
+    // Verify the fund exists
+    const deployment = stores.deploymentsStore.data.find(item => item.fundId === fundId);
+    if (!deployment) {
+      throw new Error(`Registry not found: ${fundId}`);
+    }
+
+    // Get tokens from the store
+    const tokensStore = stores.tokensStore;
+    const tokens = tokensStore.data;
+
+    // Find the token to remove
+    const tokenIndex = tokens.findIndex(token =>
+      token.fundId === fundId && token.asset.policy === policyId
+    );
+
+    if (tokenIndex === -1) {
+      throw new Error(`Token contract with policy ID ${policyId} not found for fund ${fundId}`);
+    }
+
+    // Remove the token using the store's remove method
+    const removed = tokensStore.remove(token =>
+      token.fundId === fundId && token.asset.policy === policyId
+    );
+
+    if (!removed) {
+      throw new Error(`Failed to remove token contract with policy ID ${policyId}`);
+    }
+
+    // Save the updated store
+    await tokensStore.save();
+
+    console.log(`Token contract removed from registry for fund ${fundId}:`, {
+      policyId
+    });
 
     return true;
   }

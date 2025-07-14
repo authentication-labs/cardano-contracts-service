@@ -5,12 +5,20 @@ import {
   getWhitelistHandler,
   addToWhitelistHandler,
   removeFromWhitelistHandler,
+  addTokenContractHandler,
+  getTokenContractsHandler,
+  getTokenPoliciesHandler,
+  removeTokenContractHandler,
 } from './registry.controller.ts';
 import {
   createRegistrySchema,
   registryParamsSchema,
   removeFromWhitelistSchema,
   addToWhitelistSchema,
+  addTokenContractSchema,
+  getTokenContractsSchema,
+  getTokenPoliciesSchema,
+  removeTokenContractSchema,
 } from './registry.schemas.ts';
 import { validate } from '../../middleware.ts';
 
@@ -30,5 +38,17 @@ router.post('/:fundId/whitelist', validate(addToWhitelistSchema), addToWhitelist
 
 // DELETE /registries/{fundId}/whitelist/{address} - Remove an address from the whitelist
 router.delete('/:fundId/whitelist/:address', validate(removeFromWhitelistSchema), removeFromWhitelistHandler);
+
+// POST /registries/{fundId}/tokens - Add a token contract to the registry
+router.post('/:fundId/tokens', validate(addTokenContractSchema), addTokenContractHandler);
+
+// GET /registries/{fundId}/tokens - Get token contracts for the registry
+router.get('/:fundId/tokens', validate(getTokenContractsSchema), getTokenContractsHandler);
+
+// GET /registries/{fundId}/policies - Get token policies for the registry
+router.get('/:fundId/policies', validate(getTokenPoliciesSchema), getTokenPoliciesHandler);
+
+// DELETE /registries/{fundId}/tokens/{policyId} - Remove a token contract from the registry
+router.delete('/:fundId/tokens/:policyId', validate(removeTokenContractSchema), removeTokenContractHandler);
 
 export default router;

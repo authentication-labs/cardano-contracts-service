@@ -33,6 +33,14 @@ const config = {
       name: 'Whitelist',
       description: 'Whitelist management endpoints',
     },
+    {
+      name: 'Token',
+      description: 'Token contract management endpoints',
+    },
+    {
+      name: 'Transfer',
+      description: 'Transfer operations endpoints',
+    },
   ],
 };
 
