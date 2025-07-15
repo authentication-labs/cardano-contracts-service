@@ -444,6 +444,75 @@ GET /transfers/{fundId}/funds
 ]
 ```
 
+#### **Get User Balance by Payment Credential Hash**
+```http
+GET /transfers/{fundId}/balance/{paymentCredentialHash}
+```
+
+**Description:**
+Retrieves the token balance for a specific user identified by their payment credential hash within a fund's transfer contract.
+
+**Parameters:**
+- `fundId` (path): Unique identifier for the fund
+- `paymentCredentialHash` (path): Payment credential hash of the user (56-character hex string)
+
+**Response:**
+```json
+{
+  "paymentCredentialHash": "a9ed5d2f7dfcff93e8e6e1d88e3e47c55fe8174f5d97099ba129ed39",
+  "totalAssets": {
+    "3943354a4d255889dd93a1c09b3317915b2108c03ff4387fa1dd8b6b:ayotoken": "10000",
+    "5d39713952ea929221b823ccf1ad710482f53132e152c08d878e19a2:ayytoken": "5000"
+  },
+  "utxos": [
+    {
+      "outRef": "b32b2fe50fb42910a3d562565ef87511fc4b4bc7d2817d7e35d2cae8cfce5faa#1",
+      "assets": {
+        "3943354a4d255889dd93a1c09b3317915b2108c03ff4387fa1dd8b6b:ayotoken": "10000"
+      }
+    },
+    {
+      "outRef": "c45a7b8e9f1234567890abcdef1234567890abcdef1234567890abcdef1234#0",
+      "assets": {
+        "5d39713952ea929221b823ccf1ad710482f53132e152c08d878e19a2:ayytoken": "5000"
+      }
+    }
+  ]
+}
+```
+
+**Error Response (User Not Found):**
+```json
+{
+  "error": "No tokens found for payment credential hash a9ed5d2f7dfcff93e8e6e1d88e3e47c55fe8174f5d97099ba129ed39 in fund 686c0c6dc5f1291f1c52971d"
+}
+```
+
+**Usage Examples:**
+
+**Check User Balance:**
+```bash
+curl -X GET http://localhost:3000/transfers/686c0c6dc5f1291f1c52971d/balance/a9ed5d2f7dfcff93e8e6e1d88e3e47c55fe8174f5d97099ba129ed39
+```
+
+**Check Balance for Non-Existent User:**
+```bash
+curl -X GET http://localhost:3000/transfers/686c0c6dc5f1291f1c52971d/balance/nonexistentuserhash
+```
+
+**Business Logic:**
+- Searches all UTxOs in the transfer contract for the specified fund
+- Filters UTxOs by the payment credential hash in the datum
+- Aggregates all token balances for the user
+- Returns detailed information including individual UTxOs and total balances
+- Returns 404 if no tokens are found for the user
+
+**Security Considerations:**
+- No authentication required (public information from blockchain)
+- Only returns data for the specified payment credential hash
+- Validates fund existence before processing
+- Handles malformed UTxO data gracefully
+
 ### Purchase Operations
 
 #### **Purchase Tokens**
@@ -644,6 +713,35 @@ curl -X DELETE http://localhost:3000/registries/fund_001/tokens/f1f167caef58d4a5
 curl -X GET http://localhost:3000/registries/fund_001/policies
 ```
 
+### **Scenario 7: User Balance Checking**
+
+1. **Check All Fund Balances**
+```bash
+curl -X GET http://localhost:3000/transfers/686c0c6dc5f1291f1c52971d/funds
+```
+
+2. **Check Specific User Balance**
+```bash
+curl -X GET http://localhost:3000/transfers/686c0c6dc5f1291f1c52971d/balance/a9ed5d2f7dfcff93e8e6e1d88e3e47c55fe8174f5d97099ba129ed39
+```
+
+3. **Check Balance for User with Multiple Token Types**
+```bash
+curl -X GET http://localhost:3000/transfers/686c0c6dc5f1291f1c52971d/balance/c7057b222e290d220f10497f3d7a38d7cafc7fe0b4f6ab846bd3c953
+```
+
+4. **Check Balance for Non-Existent User**
+```bash
+curl -X GET http://localhost:3000/transfers/686c0c6dc5f1291f1c52971d/balance/nonexistentuserhash
+```
+
+**Expected Response for Non-Existent User:**
+```json
+{
+  "error": "No tokens found for payment credential hash nonexistentuserhash in fund 686c0c6dc5f1291f1c52971d"
+}
+```
+
 ### **Scenario 6: Complete Deposit and Purchase Flow with Validation**
 
 1. **Check Fund Status**
@@ -712,6 +810,11 @@ curl -X POST http://localhost:3000/transfers/686c0c6dc5f1291f1c52971d/purchase \
 8. **Verify Purchase Success**
 ```bash
 curl -X GET http://localhost:3000/transfers/686c0c6dc5f1291f1c52971d/funds
+```
+
+9. **Check Specific User Balance**
+```bash
+curl -X GET http://localhost:3000/transfers/686c0c6dc5f1291f1c52971d/balance/a9ed5d2f7dfcff93e8e6e1d88e3e47c55fe8174f5d97099ba129ed39
 ```
 
 ---
@@ -894,6 +997,7 @@ The OpenAPI documentation is organized into the following categories:
 - `POST /transfers/{fundId}/transfer` - Transfer tokens within contract
 - `POST /transfers/{fundId}/spend` - Spend specific UTxOs
 - `GET /transfers/{fundId}/funds` - Get transfer funds
+- `GET /transfers/{fundId}/balance/{paymentCredentialHash}` - Get user balance by payment credential hash
 - `POST /transfers/{fundId}/purchase` - Purchase tokens from fund
 
 ### **Schema Definitions**

@@ -5,6 +5,7 @@ import {
   TransferToInput,
   SpendInput,
   GetFundsInput,
+  GetUserBalanceInput,
   PurchaseInput,
 } from './transfer.schemas.ts';
 
@@ -85,6 +86,30 @@ export async function getFundsHandler(
     }));
 
     res.status(200).json(serializedResult);
+  } catch (e: any) {
+    console.error(e.message);
+    res.status(500).json({ error: e.message });
+  }
+}
+
+export async function getUserBalanceHandler(
+  req: Request<GetUserBalanceInput>,
+  res: Response
+) {
+  try {
+    const result = await TransferService.getUserBalance(
+      req.params.fundId,
+      req.params.paymentCredentialHash,
+    );
+
+    if (result === null) {
+      res.status(404).json({
+        error: `No tokens found for payment credential hash ${req.params.paymentCredentialHash} in fund ${req.params.fundId}`
+      });
+      return;
+    }
+
+    res.status(200).json(result);
   } catch (e: any) {
     console.error(e.message);
     res.status(500).json({ error: e.message });

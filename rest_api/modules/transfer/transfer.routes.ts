@@ -4,6 +4,7 @@ import {
   transferToHandler,
   spendHandler,
   getFundsHandler,
+  getUserBalanceHandler,
   purchaseHandler,
 } from './transfer.controller.ts';
 import {
@@ -11,6 +12,7 @@ import {
   transferToSchema,
   spendSchema,
   getFundsSchema,
+  getUserBalanceSchema,
   purchaseSchema,
 } from './transfer.schemas.ts';
 import { validate } from '../../middleware.ts';
@@ -28,6 +30,9 @@ router.post('/:fundId/spend', validate(spendSchema), spendHandler);
 
 // GET /transfers/{fundId}/funds - Get transfer funds grouped by owner
 router.get('/:fundId/funds', validate(getFundsSchema), getFundsHandler);
+
+// GET /transfers/{fundId}/balance/{paymentCredentialHash} - Get user balance by payment credential hash
+router.get('/:fundId/balance/:paymentCredentialHash', validate(getUserBalanceSchema), getUserBalanceHandler);
 
 // POST /transfers/{fundId}/purchase - Purchase tokens (for whitelisted users)
 router.post('/:fundId/purchase', validate(purchaseSchema), purchaseHandler);

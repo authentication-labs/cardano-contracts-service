@@ -51,6 +51,14 @@ export const getFundsSchema = z.object({
   }),
 });
 
+// Schema for getting user balance by payment credential hash
+export const getUserBalanceSchema = z.object({
+  params: z.object({
+    fundId: z.string({ required_error: 'Fund ID is required' }),
+    paymentCredentialHash: z.string({ required_error: 'Payment credential hash is required' }).describe('Payment credential hash of the user'),
+  }),
+});
+
 // Schema for purchase operation
 export const purchaseSchema = z.object({
   params: z.object({
@@ -70,4 +78,5 @@ export type DepositInput = z.infer<typeof depositSchema>;
 export type TransferToInput = z.infer<typeof transferToSchema>;
 export type SpendInput = z.infer<typeof spendSchema>;
 export type GetFundsInput = z.infer<typeof getFundsSchema.shape.params>;
+export type GetUserBalanceInput = z.infer<typeof getUserBalanceSchema.shape.params>;
 export type PurchaseInput = z.infer<typeof purchaseSchema>; 

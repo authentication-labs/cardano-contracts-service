@@ -153,27 +153,53 @@ export class RegistryService {
       throw new Error(`Registry not found: ${fundId}`);
     }
 
-    // Create token item
-    const tokenItem: TokenItem = {
-      timestamp: new Date(),
-      fundId: fundId,
-      tokenContractAddr: deployment.scripts.Transfer.address, // Use the transfer contract address
-      asset: {
-        policy: policyId,
-        name: `token_${fundId}_${Date.now()}` // Generate a unique name
-      }
-    };
-
-    // Add to tokens store using the store's add method
+    // Get tokens from the store
     const tokensStore = stores.tokensStore;
-    tokensStore.add(tokenItem);
+    const tokens = tokensStore.data;
+
+    // Check if a token with the same policy already exists
+    const existingTokenIndex = tokens.findIndex(token =>
+      token.asset.policy === policyId
+    );
+
+    let tokenItem: TokenItem;
+
+    if (existingTokenIndex !== -1) {
+      // Token with same policy exists, update it with fundId
+      const existingToken = tokens[existingTokenIndex];
+      tokenItem = {
+        ...existingToken,
+        fundId: fundId,
+        tokenContractAddr: deployment.scripts.Transfer.address
+      };
+
+      // Remove the existing token and add the updated one
+      tokensStore.remove(token => token.asset.policy === policyId);
+      tokensStore.add(tokenItem);
+
+      console.log(`Token with policy ${policyId} already exists, updated with fundId ${fundId}`);
+    } else {
+      // Create new token item
+      tokenItem = {
+        timestamp: new Date(),
+        fundId: fundId,
+        tokenContractAddr: deployment.scripts.Transfer.address, // Use the transfer contract address
+        asset: {
+          policy: policyId,
+          name: `token_${fundId}_${Date.now()}` // Generate a unique name
+        }
+      };
+
+      // Add to tokens store using the store's add method
+      tokensStore.add(tokenItem);
+
+      console.log(`New token contract added to registry for fund ${fundId}:`, {
+        policyId
+      });
+    }
 
     // Save the updated store
     await tokensStore.save();
-
-    console.log(`Token contract added to registry for fund ${fundId}:`, {
-      policyId
-    });
 
     return tokenItem;
   }
@@ -196,7 +222,7 @@ export class RegistryService {
     return fundTokens;
   }
 
-  static async getTokenPolicies(fundId: string): Promise<string[]> {
+  static async getTokenPolicies(fundId: string): Promise<{ tokenName: string; policy: string }[]> {
     await stores.loadAll();
 
     // Verify the fund exists
@@ -209,10 +235,13 @@ export class RegistryService {
     const tokens = stores.tokensStore.data;
 
     // Filter tokens that belong to this fund and extract policy IDs
+    // const fundTokenPolicies = tokens
+    //   .filter(token => token.fundId === fundId)
+    //   .map(token => token.asset.policy);
+    // return [{tokenname:token.asset.name, policy:token.asset.policy}]
     const fundTokenPolicies = tokens
       .filter(token => token.fundId === fundId)
-      .map(token => token.asset.policy);
-
+      .map(token => ({ tokenName: token.asset.name, policy: token.asset.policy }));
     return fundTokenPolicies;
   }
 

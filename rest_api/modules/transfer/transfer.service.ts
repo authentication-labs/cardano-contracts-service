@@ -23,6 +23,15 @@ export interface TransferFund {
   }>;
 }
 
+export interface UserBalance {
+  paymentCredentialHash: string;
+  totalAssets: Record<string, string>;
+  utxos: Array<{
+    outRef: string;
+    assets: Record<string, string>;
+  }>;
+}
+
 export class TransferService {
 
   static async deposit(
@@ -195,13 +204,10 @@ export class TransferService {
     return Array.from(ownerGroups.values());
   }
 
-  static async purchase(
+  static async getUserBalance(
     fundId: string,
-    asset: string,
-    account: string,
-    amount: string,
     paymentCredentialHash: string,
-  ): Promise<void> {
+  ): Promise<UserBalance | null> {
     await stores.loadAll();
 
     const deployment = stores.deploymentsStore.data.find(item => item.fundId === fundId);
@@ -209,23 +215,6 @@ export class TransferService {
       throw new Error(`Registry not found: ${fundId}`);
     }
 
-    // Parse asset to get policy ID
-    const [policyId, assetName] = asset.split(':');
-    if (!policyId || !assetName) {
-      throw new Error(`Invalid asset format. Expected format: policyId:assetName, got: ${asset}`);
-    }
-
-    // Check if token is registered with the fund
-    const tokens = stores.tokensStore.data;
-    const isTokenRegistered = tokens.some(token =>
-      token.fundId === fundId && token.asset.policy === policyId
-    );
-
-    if (!isTokenRegistered) {
-      throw new Error(`Token with policy ID ${policyId} is not registered for fund ${fundId}`);
-    }
-
-    // Verify the user is whitelisted
     const lucid = await createLucid();
     const scriptsLoader = new ScriptsLoader(lucid, deployment);
     scriptsLoader.fromInline();
@@ -235,69 +224,128 @@ export class TransferService {
       throw new Error("Scripts not loaded");
     }
 
-    // Check if the payment credential hash is in the whitelist
-    const registryScriptAddr = scripts.Registry.address;
-    const registryUtxos = await lucid.utxosAt(registryScriptAddr);
+    const transferScriptAddr = scripts.Transfer.address;
+    const utxos = await lucid.utxosAt(transferScriptAddr);
 
-    const adminTokenUnit = assetToUnit(toLucidAsset(deployment.params.adminToken));
-    const isWhitelisted = registryUtxos.some(utxo => {
-      if (!utxo.datum || !utxo.assets[adminTokenUnit]) {
-        return false;
-      }
+    // Filter UTxOs for the specific user
+    const userUtxos: Array<{
+      outRef: string;
+      assets: Record<string, bigint>;
+    }> = [];
+    const totalAssets: Record<string, bigint> = {};
+
+    for (const utxo of utxos) {
+      if (!utxo.datum) continue;
 
       try {
-        const datum = Data.from<RegistryDatumT>(
+        // Extract owner from datum
+        const owner = Data.from<TransferDatumT>(
           utxo.datum,
-          RegistryDatum as unknown as RegistryDatumT,
+          TransferDatum as unknown as TransferDatumT,
         );
-        return datum.includes(paymentCredentialHash);
-      } catch {
-        return false;
-      }
-    });
 
-    if (!isWhitelisted) {
-      throw new Error(`Payment credential hash ${paymentCredentialHash} is not whitelisted for fund ${fundId}`);
-    }
+        // Check if this UTxO belongs to the requested user
+        if (owner === paymentCredentialHash) {
+          userUtxos.push({
+            outRef: `${utxo.txHash}#${utxo.outputIndex}`,
+            assets: utxo.assets,
+          });
 
-    // Convert amount to bigint
-    const amountBigInt = BigInt(amount);
-    if (amountBigInt <= 0n) {
-      throw new Error("Purchase amount must be greater than 0");
-    }
-
-    // Check available balance in transfer contract by looking at total assets across all owners
-    const transferScriptAddr = scripts.Transfer.address;
-    const transferUtxos = await lucid.utxosAt(transferScriptAddr);
-
-    // Find the asset unit - asset name needs to be hex-encoded
-    const assetNameHex = Array.from(new TextEncoder().encode(assetName))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
-    const assetUnit = `${policyId}${assetNameHex}`;
-    console.log(`Looking for asset unit: ${assetUnit}`);
-    console.log(`Available asset units in UTxOs:`, Object.keys(transferUtxos[0]?.assets || {}));
-
-    let availableBalance = 0n;
-
-    for (const utxo of transferUtxos) {
-      if (utxo.assets[assetUnit]) {
-        availableBalance += utxo.assets[assetUnit] as bigint;
+          // Update total assets
+          for (const [unit, amount] of Object.entries(utxo.assets)) {
+            if (!totalAssets[unit]) {
+              totalAssets[unit] = 0n;
+            }
+            totalAssets[unit] += amount as bigint;
+          }
+        }
+      } catch (error) {
+        console.warn(`Failed to parse UTxO datum: ${utxo.txHash}#${utxo.outputIndex}`, error);
       }
     }
 
-    console.log(`Available balance for ${assetUnit}: ${availableBalance}`);
-
-    if (availableBalance < amountBigInt) {
-      throw new Error(`Insufficient balance. Available: ${availableBalance}, Requested: ${amountBigInt}`);
+    // If no UTxOs found for the user, return null
+    if (userUtxos.length === 0) {
+      return null;
     }
 
-    // Create target for the purchase (transfer to the buyer)
-    const targets = [`${paymentCredentialHash}:${amount}`];
+    // Convert BigInt values to strings for JSON serialization
+    return {
+      paymentCredentialHash,
+      totalAssets: Object.fromEntries(
+        Object.entries(totalAssets).map(([unit, amount]) => [unit, amount.toString()])
+      ),
+      utxos: userUtxos.map(utxo => ({
+        outRef: utxo.outRef,
+        assets: Object.fromEntries(
+          Object.entries(utxo.assets).map(([unit, amount]) => [unit, amount.toString()])
+        ),
+      })),
+    };
+  }
 
-    // Execute the transfer operation
-    const transferOps = new ExecTransferOps(fundId, env.DEFAULT_SCRIPTS_SRC, account, asset);
-    await transferOps.init();
-    await transferOps.to(targets);
+  static async purchase(
+    fundId: string,
+    asset: string,
+    account: string,
+    amount: string,
+    paymentCredentialHash: string,
+  ): Promise<void> {
+    // Execute CLI command instead of actual purchase logic
+    const command = `./man op --fund-id ${fundId} --account ${account} transfer --asset ${asset} deposit ${paymentCredentialHash}:${amount}`;
+
+    console.log(`Executing CLI command: ${command}`);
+    console.log(`Current working directory: ${Deno.cwd()}`);
+
+    try {
+      // Try to find the man script in the project root
+      const projectRoot = new URL('../../../', import.meta.url);
+      const manScriptPath = new URL('./man', projectRoot);
+
+      console.log(`Looking for man script at: ${manScriptPath.pathname}`);
+
+      // Check if the man script exists
+      try {
+        await Deno.stat(manScriptPath.pathname);
+        console.log(`Man script found at: ${manScriptPath.pathname}`);
+      } catch (statError) {
+        console.log(`Man script not found at: ${manScriptPath.pathname}, trying relative path`);
+      }
+
+      // Execute the CLI command using Deno.run
+      const process = Deno.run({
+        cmd: [
+          "deno",
+          "run",
+          "-A",
+          "--env-file",
+          "cli/mod.ts",
+          "op",
+          "--fund-id", fundId,
+          "--account", account,
+          "transfer",
+          "--asset", asset,
+          "deposit",
+          `${paymentCredentialHash}:${amount}`
+        ],
+        cwd: Deno.cwd(),
+        stdout: "piped",
+        stderr: "piped",
+      });
+
+      const { code } = await process.status();
+      const stdout = new TextDecoder().decode(await process.output());
+      const stderr = new TextDecoder().decode(await process.stderrOutput());
+
+      if (code !== 0) {
+        throw new Error(`CLI command failed with code ${code}: ${stderr}`);
+      }
+
+      console.log(`CLI command output: ${stdout}`);
+
+    } catch (error) {
+      console.error(`Failed to execute CLI command: ${error.message}`);
+      throw new Error(`Failed to execute transfer command: ${error.message}`);
+    }
   }
 } 
