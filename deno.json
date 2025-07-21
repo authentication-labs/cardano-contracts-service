@@ -14,6 +14,8 @@
     "@types/express": "npm:@types/express@^5.0.0",
     "swagger-ui-express": "npm:swagger-ui-express@^5.0.1",
     "@types/swagger-ui-express": "npm:@types/swagger-ui-express@^4.1.8",
+    "cors": "npm:cors@^2.8.5",
+    "@types/cors": "npm:@types/cors@^2.8.17",
     "lucid": "https://deno.land/x/lucid@0.20.11/mod.ts",
     "cbor": "https://deno.land/x/cbor@v1.6.0/index.js",
     "zod": "npm:zod@^3.25.56"
