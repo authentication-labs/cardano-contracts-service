@@ -14,6 +14,7 @@ function getEnvironmentReport() {
     "BLOCKFROST_URL",
     "LUCID_NETWORK",
     "DEFAULT_SCRIPTS_SRC",
+    "CORS_ORIGINS",
   ]
 
   const varsReport = vars.map((v) => {
@@ -24,11 +25,20 @@ function getEnvironmentReport() {
   return varsReport
 }
 
+function getCorsOrigins(): string[] {
+  const corsOrigins = Deno.env.get("CORS_ORIGINS");
+  if (corsOrigins) {
+    return corsOrigins.split(",").map(origin => origin.trim());
+  }
+  // Default fallback origins
+  return ['http://localhost:3003', 'http://localhost:3000', 'http://localhost:3002', 'http://localhost:6001'];
+}
+
 const app: Express = express();
 
 // Enable CORS for all routes
 app.use(cors({
-  origin: ['http://localhost:3003', 'http://localhost:3000', 'http://localhost:3002'],
+  origin: getCorsOrigins(),
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
